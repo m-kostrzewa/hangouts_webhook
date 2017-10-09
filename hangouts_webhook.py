@@ -5,6 +5,7 @@
 
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from chromote import Chromote
+import thread
 import subprocess
 import time
 import argparse
@@ -64,17 +65,21 @@ def main():
 
 
 def run_webhook_proxy():
-    # Assumes that ~/.ultrahook contains:
-    # "api_key: $YOUR_ULTRAHOOK_API_KEY"
-    subprocess.Popen("ultrahook {} {}".format(args.subdomain, args.port),
-                      shell=True)
-    # btw dunno why this doesn't work:
-    #subprocess.Popen(["ultrahook", args.subdomain, str(args.port)],
-    #                 shell=True)
+    thread.start_new_thread(keep_proxy_alive, ())
 
 
-class AlreadyInHangoutsException(Exception):
-    pass
+def keep_proxy_alive():
+    retcode = 0
+    while retcode != 0:
+        # Assumes that ~/.ultrahook contains:
+        # "api_key: $YOUR_ULTRAHOOK_API_KEY"
+        proc = subprocess.Popen("ultrahook {} {}"
+                                .format(args.subdomain, args.port),
+                                shell=True)
+        # btw dunno why this doesn't work:
+        #subprocess.Popen(["ultrahook", args.subdomain, str(args.port)],
+        #                 shell=True)
+        retcode = proc.wait()
 
 
 class WebhookReceiver(BaseHTTPRequestHandler):
@@ -86,8 +91,6 @@ class WebhookReceiver(BaseHTTPRequestHandler):
             navigate_to_hangouts(t)
             time.sleep(args.click_delay)
             join_hangouts_meeting(t)
-        except AlreadyInHangoutsException:
-            pass
         finally:
             self.send_response(200)
 
@@ -102,8 +105,7 @@ def get_tab():
     chrome = Chromote()
     for t in chrome.tabs:
         if t.url == args.hangouts_url:
-            print("Already in hangouts session")
-            raise AlreadyInHangoutsException
+            return t
     return chrome.tabs[0]
 
 def navigate_to_hangouts(t):
