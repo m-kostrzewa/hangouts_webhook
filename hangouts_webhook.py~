@@ -69,7 +69,8 @@ def run_webhook_proxy():
 
 
 def keep_proxy_alive():
-    while True:
+    retcode = 0
+    while retcode != 0:
         # Assumes that ~/.ultrahook contains:
         # "api_key: $YOUR_ULTRAHOOK_API_KEY"
         proc = subprocess.Popen("ultrahook {} {}"
@@ -78,7 +79,7 @@ def keep_proxy_alive():
         # btw dunno why this doesn't work:
         #subprocess.Popen(["ultrahook", args.subdomain, str(args.port)],
         #                 shell=True)
-        proc.wait()
+        retcode = proc.wait()
 
 
 class WebhookReceiver(BaseHTTPRequestHandler):
