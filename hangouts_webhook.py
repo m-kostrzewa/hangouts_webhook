@@ -78,7 +78,12 @@ def keep_proxy_alive():
         # btw dunno why this doesn't work:
         #subprocess.Popen(["ultrahook", args.subdomain, str(args.port)],
         #                 shell=True)
-        proc.wait()
+
+        # hotfix - ultrahook kinda stops responding after a couple minutes;
+        # so keep restarting it... :/
+        time.sleep(60*2) # 2 min
+        proc.kill()
+        #proc.wait()
 
 
 class WebhookReceiver(BaseHTTPRequestHandler):
