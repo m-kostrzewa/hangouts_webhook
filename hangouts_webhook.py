@@ -106,7 +106,13 @@ def play_join_sound():
         pass
 
 def get_tab():
-    chrome = Chromote()
+    try:
+    	chrome = Chromote()
+    except:
+        subprocess.Popen(["google-chrome",
+                          "--remote-debugging-port=9222"])
+        time.sleep(5)
+        chrome = Chromote()
     for t in chrome.tabs:
         if t.url == args.hangouts_url:
             return t
